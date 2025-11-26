@@ -317,7 +317,7 @@ class FaceAnalysisApp {
             await fetch(collector.webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payoad)
             });
         } catch (error) {
             console.error('Send error:', error);
