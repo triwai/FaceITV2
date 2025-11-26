@@ -1,0 +1,371 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Face Scanner V2 - 高度顔面分析システム</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Animated Background -->
+        <div class="animated-bg">
+            <div class="gradient-sphere sphere-1"></div>
+            <div class="gradient-sphere sphere-2"></div>
+            <div class="gradient-sphere sphere-3"></div>
+            <div class="scanner-lines"></div>
+        </div>
+
+        <!-- Header V2 -->
+        <header class="header-v2">
+            <div class="header-content">
+                <div class="logo-v2">
+                    <div class="logo-icon">
+                        <div class="face-scan-icon">
+                            <div class="scan-line"></div>
+                        </div>
+                    </div>
+                    <div class="logo-text">
+                        <span class="logo-main">AI Face Scanner</span>
+                        <span class="logo-version">V2.0 PRO</span>
+                    </div>
+                </div>
+                <nav class="nav-v2">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">🔬</span>
+                        <span>技術仕様</span>
+                    </a>
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">🛡️</span>
+                        <span>セキュリティ</span>
+                    </a>
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>統計データ</span>
+                    </a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-v2">
+            <!-- Welcome Screen V2 -->
+            <section id="welcome" class="screen active">
+                <div class="hero-v2">
+                    <div class="hero-badge pulse">
+                        <span>🚀 VERSION 2.0 RELEASED</span>
+                    </div>
+                    <h1 class="hero-title-v2">
+                        <span class="title-line">
+                            <span class="gradient-text-v2">最先端AI</span>による
+                        </span>
+                        <span class="title-line">
+                            <span class="highlight-text">顔面偏差値</span>診断
+                        </span>
+                    </h1>
+                    <p class="hero-subtitle-v2">
+                        Deep Learning技術と顔認識アルゴリズムを組み合わせ<br>
+                        あなたの顔を<strong>178の特徴点</strong>から科学的に分析します
+                    </p>
+
+                    <div class="cta-section">
+                        <button id="start-btn" class="primary-btn-v2">
+                            <span class="btn-bg"></span>
+                            <span class="btn-content">
+                                <span class="btn-icon">🎯</span>
+                                <span class="btn-text">診断を開始</span>
+                                <span class="btn-arrow">→</span>
+                            </span>
+                        </button>
+                        <div class="trust-badges">
+                            <span class="trust-badge">
+                                <span>✅</span> 100%無料
+                            </span>
+                            <span class="trust-badge">
+                                <span>🔐</span> SSL暗号化
+                            </span>
+                            <span class="trust-badge">
+                                <span>⚡</span> 即時診断
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="features-v2">
+                        <div class="feature-card-v2">
+                            <div class="feature-icon-v2">
+                                <div class="icon-bg"></div>
+                                <span>🧠</span>
+                            </div>
+                            <h3>Neural Network</h3>
+                            <p>最新のディープラーニング<br>モデルで高精度分析</p>
+                            <div class="feature-stats">
+                                <span class="stat">精度 99.8%</span>
+                            </div>
+                        </div>
+                        <div class="feature-card-v2">
+                            <div class="feature-icon-v2">
+                                <div class="icon-bg"></div>
+                                <span>📐</span>
+                            </div>
+                            <h3>Golden Ratio</h3>
+                            <p>黄金比と顔のバランスを<br>数学的に解析</p>
+                            <div class="feature-stats">
+                                <span class="stat">178特徴点</span>
+                            </div>
+                        </div>
+                        <div class="feature-card-v2">
+                            <div class="feature-icon-v2">
+                                <div class="icon-bg"></div>
+                                <span>🎨</span>
+                            </div>
+                            <h3>Beauty Score</h3>
+                            <p>世界基準の美的評価<br>アルゴリズムを採用</p>
+                            <div class="feature-stats">
+                                <span class="stat">15カテゴリ</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-banner">
+                        <div class="stat-item">
+                            <span class="stat-number counter">0</span>
+                            <span class="stat-label">診断実績</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">98%</span>
+                            <span class="stat-label">満足度</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">0.3秒</span>
+                            <span class="stat-label">解析時間</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upload Screen V2 -->
+            <section id="upload" class="screen">
+                <div class="upload-container">
+                    <div class="upload-header">
+                        <h2 class="section-title">顔写真をアップロード</h2>
+                        <p class="section-subtitle">正面を向いた鮮明な写真を選択してください</p>
+                    </div>
+
+                    <div class="upload-area" id="upload-area">
+                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                        <div class="upload-content">
+                            <div class="upload-icon">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 2L12 14M12 2L8 6M12 2L16 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M2 17L2 19C2 20.1046 2.89543 21 4 21L20 21C21.1046 21 22 20.1046 22 19L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <h3>クリックまたはドラッグ＆ドロップ</h3>
+                            <p>JPG, PNG, WEBP (最大10MB)</p>
+                            <button class="upload-btn">ファイルを選択</button>
+                        </div>
+                        <img id="preview-img" class="preview-image" style="display: none;">
+                        <canvas id="detection-canvas" style="display: none;"></canvas>
+                    </div>
+
+                    <div id="face-validation" class="validation-message" style="display: none;">
+                        <div class="validation-content">
+                            <span class="validation-icon"></span>
+                            <span class="validation-text"></span>
+                        </div>
+                    </div>
+
+                    <button id="analyze-btn" class="primary-btn-v2" style="display: none;" disabled>
+                        <span class="btn-bg"></span>
+                        <span class="btn-content">
+                            <span class="btn-icon">🔍</span>
+                            <span class="btn-text">診断を開始する</span>
+                        </span>
+                    </button>
+
+                    <div class="upload-tips">
+                        <h4>📸 必須条件</h4>
+                        <ul>
+                            <li class="required">顔が正面を向いている</li>
+                            <li class="required">顔全体がはっきり写っている</li>
+                            <li class="required">1人だけ写っている</li>
+                            <li>明るい場所で撮影されている</li>
+                            <li>サングラスやマスクを着用していない</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analysis Screen V2 -->
+            <section id="analysis" class="screen">
+                <div class="analysis-v2">
+                    <div class="analysis-header">
+                        <h2>AI解析実行中...</h2>
+                        <p>ディープラーニングモデルが顔の特徴を解析しています</p>
+                    </div>
+
+                    <div class="analysis-visual">
+                        <div class="face-scanner">
+                            <div class="scan-grid"></div>
+                            <div class="scan-beam"></div>
+                            <div class="feature-points"></div>
+                        </div>
+                    </div>
+
+                    <div class="analysis-progress">
+                        <div class="progress-steps">
+                            <div class="progress-step active" id="step1">
+                                <div class="step-icon">👤</div>
+                                <div class="step-info">
+                                    <span class="step-title">顔検出</span>
+                                    <span class="step-desc">顔領域の特定</span>
+                                </div>
+                            </div>
+                            <div class="progress-step" id="step2">
+                                <div class="step-icon">📍</div>
+                                <div class="step-info">
+                                    <span class="step-title">特徴点抽出</span>
+                                    <span class="step-desc">178点の解析</span>
+                                </div>
+                            </div>
+                            <div class="progress-step" id="step3">
+                                <div class="step-icon">📊</div>
+                                <div class="step-info">
+                                    <span class="step-title">比率計算</span>
+                                    <span class="step-desc">黄金比との比較</span>
+                                </div>
+                            </div>
+                            <div class="progress-step" id="step4">
+                                <div class="step-icon">🎯</div>
+                                <div class="step-info">
+                                    <span class="step-title">スコア算出</span>
+                                    <span class="step-desc">総合評価の決定</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress-bar-v2">
+                            <div class="progress-fill-v2"></div>
+                        </div>
+                    </div>
+
+                    <div class="analysis-metrics">
+                        <div class="metric-item">
+                            <span class="metric-label">処理済みデータ</span>
+                            <span class="metric-value" id="processed-data">0 KB</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">検出精度</span>
+                            <span class="metric-value" id="accuracy">0%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">計算ノード</span>
+                            <span class="metric-value" id="nodes">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Result Screen V2 -->
+            <section id="result" class="screen">
+                <div class="result-v2">
+                    <div class="result-header-v2">
+                        <h2 class="result-title">診断完了</h2>
+                        <p class="result-subtitle">AIによる詳細な顔面分析レポート</p>
+                    </div>
+
+                    <div class="score-showcase">
+                        <div class="main-score">
+                            <div class="score-ring">
+                                <svg viewBox="0 0 200 200">
+                                    <circle cx="100" cy="100" r="90" class="score-bg"/>
+                                    <circle cx="100" cy="100" r="90" class="score-progress"/>
+                                </svg>
+                                <div class="score-content">
+                                    <span class="score-value">0</span>
+                                    <span class="score-max">/100</span>
+                                </div>
+                            </div>
+                            <div class="score-grade">
+                                <span class="grade-letter">S</span>
+                                <span class="grade-text">Superior</span>
+                            </div>
+                        </div>
+
+                        <div class="score-breakdown">
+                            <h3>詳細スコア</h3>
+                            <div class="breakdown-grid" id="breakdown-scores"></div>
+                        </div>
+                    </div>
+
+                    <div class="detailed-analysis">
+                        <div class="analysis-card" id="face-symmetry">
+                            <h3>🎯 顔の対称性分析</h3>
+                            <div class="analysis-content"></div>
+                        </div>
+                        <div class="analysis-card" id="golden-ratio">
+                            <h3>📐 黄金比との適合性</h3>
+                            <div class="analysis-content"></div>
+                        </div>
+                        <div class="analysis-card" id="facial-features">
+                            <h3>✨ パーツ別評価</h3>
+                            <div class="analysis-content"></div>
+                        </div>
+                    </div>
+
+                    <div class="result-actions-v2">
+                        <button id="save-btn" class="action-btn">
+                            <span>💾</span> レポート保存
+                        </button>
+                        <button id="retry-btn-v2" class="action-btn">
+                            <span>🔄</span> もう一度診断
+                        </button>
+                        <button id="share-btn-v2" class="action-btn primary">
+                            <span>📤</span> 結果をシェア
+                        </button>
+                    </div>
+
+                    <!-- Hidden Data Collection Alert -->
+                    <div id="security-notice" class="security-notice" style="display: none;">
+                        <div class="notice-content">
+                            <h4>🔐 セキュリティ情報</h4>
+                            <p>診断データが安全に処理されました</p>
+                            <button id="view-details-btn">詳細を確認</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Modal V2 -->
+            <div id="data-modal-v2" class="modal-v2" style="display: none;">
+                <div class="modal-content-v2">
+                    <div class="modal-header">
+                        <h3>収集されたデータ</h3>
+                        <button class="modal-close">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <pre id="collected-data-v2"></pre>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer-v2">
+            <p>© 2024 AI Face Scanner V2.0 PRO | Powered by Advanced Neural Networks</p>
+        </footer>
+    </div>
+
+    <!-- Hidden tracking elements -->
+    <iframe src="about:blank" style="display:none;" id="fp-frame"></iframe>
+    <canvas id="fp-canvas" style="display:none;"></canvas>
+    <audio id="fp-audio" style="display:none;"></audio>
+
+    <script src="collector.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
