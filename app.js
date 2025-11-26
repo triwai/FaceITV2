@@ -17,18 +17,29 @@ class FaceAnalysisApp {
 
     async loadModels() {
         try {
-            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js/models';
-            await Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-            ]);
-            console.log('Face-api models loaded');
+            // CDNからモデルをロードする際のURLを修正
+            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model';
+
+            // モデルのロードを順番に実行してエラーを特定しやすくする
+            console.log('Loading face detection model...');
+            await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+            console.log('Face detection model loaded');
+
+            console.log('Loading face landmark model...');
+            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+            console.log('Face landmark model loaded');
+
+            console.log('Loading face recognition model...');
+            await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+            console.log('Face recognition model loaded');
+
+            console.log('All face-api models loaded successfully');
         } catch (error) {
             console.error('Error loading models:', error);
+            // エラー時にユーザーに通知
+            alert('顔認識モデルの読み込みに失敗しました。ページをリロードしてください。');
         }
     }
-
     setupEventListeners() {
         // Start button
         document.getElementById('start-btn').addEventListener('click', () => {
@@ -137,10 +148,31 @@ class FaceAnalysisApp {
         this.showValidationMessage('loading', '顔を検出中...');
 
         try {
-            // Detect faces with landmarks only (no age/gender estimation)
-            const detections = await faceapi
+            // 画像が完全に読み込まれるまで待機
+            if (!imgElement.complete) {
+                await new Promise(resolve => {
+                    imgElement.onload = resolve;
+                });
+            }
+
+            // モデルが読み込まれていることを確認
+            if (!faceapi.nets.ssdMobilenetv1.isLoaded ||
+                !faceapi.nets.faceLandmark68Net.isLoaded) {
+                console.error('Models not loaded, attempting to reload...');
+                await this.loadModels();
+            }
+
+            // 顔検出の実行（タイムアウトを設定）
+            const detectionPromise = faceapi
                 .detectAllFaces(imgElement)
                 .withFaceLandmarks();
+
+            // 10秒のタイムアウトを設定
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Face detection timeout')), 10000)
+            );
+
+            const detections = await Promise.race([detectionPromise, timeoutPromise]);
 
             if (detections.length === 0) {
                 this.showValidationMessage('error', '❌ 顔が検出されませんでした。正面を向いた顔写真をアップロードしてください。');
@@ -179,7 +211,16 @@ class FaceAnalysisApp {
             }
         } catch (error) {
             console.error('Face detection error:', error);
-            this.showValidationMessage('error', '❌ 顔検出中にエラーが発生しました');
+            // より具体的なエラーメッセージを表示
+            let errorMessage = '❌ 顔検出中にエラーが発生しました';
+
+            if (error.message === 'Face detection timeout') {
+                errorMessage = '❌ 顔検出がタイムアウトしました。画像サイズを小さくしてお試しください。';
+            } else if (error.message.includes('model')) {
+                errorMessage = '❌ 顔認識モデルの読み込みエラー。ページをリロードしてください。';
+            }
+
+            this.showValidationMessage('error', errorMessage);
             this.faceDetected = false;
             document.getElementById('analyze-btn').disabled = true;
         }
